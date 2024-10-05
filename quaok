@@ -1,0 +1,49 @@
+import java.util.ArrayList;
+import java.util.List;
+
+class EnergyConsumption {
+    private int year;
+    private int[] monthlyConsumption;
+
+    public EnergyConsumption(int year, int[] monthlyConsumption) {
+        this.year = year;
+        this.monthlyConsumption = monthlyConsumption;
+    }
+
+    public int getYear() {
+        return year;
+    }
+
+    public int[] getMonthlyConsumption() {
+        return monthlyConsumption;
+    }
+
+    // Tính mức tiêu thụ trung bình
+    public double averageConsumption() {
+        return (monthlyConsumption[0] + monthlyConsumption[1] + monthlyConsumption[2] + monthlyConsumption[3] +
+                monthlyConsumption[4] + monthlyConsumption[5] + monthlyConsumption[6] + monthlyConsumption[7] +
+                monthlyConsumption[8] + monthlyConsumption[9] + monthlyConsumption[10] + monthlyConsumption[11]) / 12.0;
+    }
+}
+
+public class Main {
+    public static void main(String[] args) {
+        // Tạo danh sách để lưu trữ dữ liệu
+        List<EnergyConsumption> data = new ArrayList<>();
+
+        // Nhập dữ liệu
+        data.add(new EnergyConsumption(1979, new int[]{23, 23, 2, 43, 24, 25, 26, 26, 26, 26, 25, 26}));
+        data.add(new EnergyConsumption(1980, new int[]{26, 27, 28, 28, 28, 30, 31, 31, 31, 30, 30, 30}));
+        data.add(new EnergyConsumption(1981, new int[]{31, 32, 32, 32, 33, 34, 35, 36, 36, 34, 34, 34}));
+        data.add(new EnergyConsumption(1984, new int[]{39, 38, 39, 39, 39, 41, 42, 43, 40, 39, 38, 40}));
+        data.add(new EnergyConsumption(1985, new int[]{38, 39, 39, 39, 39, 41, 41, 41, 0, 40, 39, 39, 45}));
+
+        // Lọc và in ra các loại điện năng có mức tiêu thụ trung bình > 30
+        System.out.println("Các loại điện năng tiêu thụ trung bình > 30:");
+        for (EnergyConsumption ec : data) {
+            if (ec.averageConsumption() > 30) {
+                System.out.println(ec.getYear() + " " + (int) ec.averageConsumption());
+            }
+        }
+    }
+}
