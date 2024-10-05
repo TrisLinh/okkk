@@ -1,0 +1,92 @@
+import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.io.DoubleWritable;
+import org.apache.hadoop.io.IntWritable;
+import org.apache.hadoop.io.LongWritable;
+import org.apache.hadoop.io.Text;
+import org.apache.hadoop.mapreduce.Job;
+import org.apache.hadoop.mapreduce.Mapper;
+import org.apache.hadoop.mapreduce.Reducer;
+import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
+import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
+
+import java.io.IOException;
+
+public class ElectricityConsumption {
+
+    // Mapper Class
+    public static class ElectricityConsumptionMapper extends Mapper<LongWritable, Text, IntWritable, DoubleWritable> {
+
+        @Override
+        protected void map(LongWritable key, Text value, Context context) throws IOException, InterruptedException {
+            // Đọc từng dòng dữ liệu
+            String line = value.toString();
+
+            // Phân tách dòng dữ liệu bằng dấu phẩy
+            String[] parts = line.split(",\\s*");
+
+            if (parts.length == 2) {
+                try {
+                    // Lấy năm và giá trị tiêu thụ điện
+                    int year = Integer.parseInt(parts[0]);
+                    double consumption = Double.parseDouble(parts[1]);
+
+                    // Xuất cặp key-value: Năm và giá trị tiêu thụ
+                    context.write(new IntWritable(year), new DoubleWritable(consumption));
+                } catch (NumberFormatException e) {
+                    // Bỏ qua các dòng không hợp lệ
+                }
+            }
+        }
+    }
+
+    // Reducer Class
+    public static class ElectricityConsumptionReducer extends Reducer<IntWritable, DoubleWritable, IntWritable, DoubleWritable> {
+
+        private static final double MAX_CONSUMPTION_THRESHOLD = 30.0;
+
+        @Override
+        protected void reduce(IntWritable key, Iterable<DoubleWritable> values, Context context) throws IOException, InterruptedException {
+            for (DoubleWritable value : values) {
+                double consumption = value.get();
+
+                // Chỉ xuất ra các cặp key-value nếu tiêu thụ lớn hơn 30
+                if (consumption > MAX_CONSUMPTION_THRESHOLD) {
+                    context.write(key, new DoubleWritable(consumption));
+                }
+            }
+        }
+    }
+
+    // Main Method
+    public static void main(String[] args) throws Exception {
+        if (args.length != 2) {
+            System.err.println("Usage: ElectricityConsumption <input path> <output path>");
+            System.exit(-1);
+        }
+
+        // Cấu hình công việc
+        Configuration conf = new Configuration();
+        Job job = Job.getInstance(conf, "Electricity Consumption Filter");
+
+        // Chỉ định các lớp Mapper và Reducer
+        job.setJarByClass(ElectricityConsumption.class);
+        job.setMapperClass(ElectricityConsumptionMapper.class);
+        job.setReducerClass(ElectricityConsumptionReducer.class);
+
+        // Định dạng key-value đầu ra từ Mapper
+        job.setMapOutputKeyClass(IntWritable.class);
+        job.setMapOutputValueClass(DoubleWritable.class);
+
+        // Định dạng key-value đầu ra từ Reducer
+        job.setOutputKeyClass(IntWritable.class);
+        job.setOutputValueClass(DoubleWritable.class);
+
+        // Đường dẫn đầu vào và đầu ra
+        FileInputFormat.addInputPath(job, new Path(args[0]));
+        FileOutputFormat.setOutputPath(job, new Path(args[1]));
+
+        // Chạy công việc và chờ cho đến khi hoàn thành
+        System.exit(job.waitForCompletion(true) ? 0 : 1);
+    }
+}
